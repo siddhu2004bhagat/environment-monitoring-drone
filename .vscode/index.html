@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en" class="dark"> 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UPI Mobile Charging Station Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap">
+    <style>
+        /* Define Theme-Specific CSS Variables */
+        html.dark {
+            --bg-body: #080c10; /* Darker background */
+            --bg-header-footer: #101827; /* Dark header/footer */
+            --bg-card: #101827; /* Darker card background */
+            --text-main: #eef2f6; /* Lighter main text */
+            --text-subtle: #94a3b8;
+            --border-subtle: #2e3a4e;
+            --shadow-subtle: rgba(0, 0, 0, 0.4);
+        }
+
+        html.light {
+            --bg-body: #f7f9fb;
+            --bg-header-footer: #ffffff;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-subtle: #64748b;
+            --border-subtle: #e2e8f0;
+            --shadow-subtle: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Apply CSS variables and smooth transitions */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .data-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 1.5rem; /* More rounded */
+            box-shadow: 0 4px 12px var(--shadow-subtle);
+            transition: all 0.3s ease-in-out;
+            cursor: default;
+        }
+        .data-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 150, 255, 0.25); /* More pronounced shadow on hover */
+        }
+        .themed-section {
+            background-color: var(--bg-header-footer);
+            border-color: var(--border-subtle);
+        }
+        
+        /* Pulse Animation (for status pill) */
+        .pulse-animation {
+            animation: pulse-ring 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+        }
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+        /* Custom Progress Bar Style */
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: var(--border-subtle);
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+        .progress-fill {
+            height: 100%;
+            transition: width 0.5s ease-out;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen p-4 md:p-12">
+    <div class="max-w-6xl mx-auto w-full">
+        
+        <header class="flex flex-col sm:flex-row justify-between items-center mb-10 p-6 rounded-3xl shadow-xl border themed-section">
+            <div class="flex flex-col text-left mb-4 sm:mb-0">
+                <h1 class="text-3xl md:text-5xl font-extrabold text-indigo-400 tracking-tight">
+                 UPI Mobile Charging Station
+                </h1>
+                <p class="text-base md:text-xl font-medium mt-1" style="color: var(--text-subtle);">
+                    Live Environmental & Transaction Data
+                </p>
+                <span id="connection-status" class="mt-5 inline-flex items-center px-4 py-1 rounded-full text-sm font-semibold shadow-md transition-colors duration-500 bg-yellow-500 text-gray-900 w-fit">
+                    Connecting...
+                </span>
+            </div>
+            
+            <div class="flex space-x-4 items-center mt-4 sm:mt-0">
+                <button id="theme-toggle" class="p-4 rounded-full transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-500/50" 
+                        style="background-color: var(--bg-card); border: 1px solid var(--border-subtle);">
+                    <svg id="moon-icon" class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    <svg id="sun-icon" class="w-6 h-6 text-yellow-500 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            
+            <div class="data-card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-red-400">Temperature</h2>
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.727A8 8 0 016.343 5.273v2.09A6 6 0 0015.657 14.634l-.001.002.001.002A6 6 0 0017.657 16.727zM7.5 14.25a.75.75 0 100 1.5.75.75 0 000-1.5zM16.5 7.5a.75.75 0 100 1.5.75.75 0 000-1.5z"></path></svg>
+                </div>
+                <p id="temperature-value" class="text-5xl font-extrabold text-red-500 tracking-tight">
+                    ---
+                </p>
+                <p class="text-lg mt-1 font-medium" style="color: var(--text-subtle);">°C</p>
+                <div class="progress-bar">
+                    <div id="temp-progress" class="progress-fill bg-red-500" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="data-card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-blue-400">Humidity</h2>
+                    <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 21h4c0-2.43 0-4.86 0-7.3s0-4.86 0-7.3H10c0 2.43 0 4.86 0 7.3s0 4.87 0 7.3zM12 14v7M12 7V3"></path></svg>
+                </div>
+                <p id="humidity-value" class="text-5xl font-extrabold text-blue-500 tracking-tight">
+                    ---
+                </p>
+                <p class="text-lg mt-1 font-medium" style="color: var(--text-subtle);">%</p>
+                <div class="progress-bar">
+                    <div id="hum-progress" class="progress-fill bg-blue-500" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="data-card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-green-400">Air Quality</h2>
+                    <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M6 18h12M9 14h6M4 22h16"></path></svg>
+                </div>
+                <p id="air-quality-value" class="text-5xl font-extrabold text-green-500 tracking-tight">
+                    ----
+                </p>
+                <p class="text-lg mt-1 font-medium" style="color: var(--text-subtle);">PPM (CO2 equiv.)</p>
+                <div class="progress-bar">
+                    <div id="aqi-progress" class="progress-fill bg-green-500" style="width: 0%;"></div>
+                </div>
+            </div>
+            
+            <div class="data-card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-indigo-400">Last Payment</h2>
+                    <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                </div>
+                <p id="payment-status-value" class="text-3xl font-black text-indigo-500 tracking-tight h-16 flex items-center">
+                    Waiting...
+                </p>
+                <div id="payment-details-value" class="text-sm mt-2 space-y-1 font-medium" style="color: var(--text-subtle);">
+                    Details: None
+                </div>
+            </div>
+
+        </div>
+
+        <footer class="p-4 rounded-xl text-center themed-section border">
+            <p class="text-sm font-medium" style="color: var(--text-subtle);">
+                <span class="font-bold">Last Data Update (Client Time):</span>
+                <span id="timestamp" class="ml-2">Waiting for first data point...</span>
+            </p>
+        </footer>
+    </div>
+    
+    <script>
+        // --- THEME TOGGLE LOGIC (Kept same) ---
+        const htmlElement = document.documentElement;
+        const toggleButton = document.getElementById('theme-toggle');
+        const sunIcon = document.getElementById('sun-icon');
+        const moonIcon = document.getElementById('moon-icon');
+
+        const setTheme = (theme) => {
+            if (theme === 'dark') {
+                htmlElement.classList.add('dark');
+                htmlElement.classList.remove('light');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                htmlElement.classList.add('light');
+                htmlElement.classList.remove('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+            localStorage.setItem('theme', theme);
+        };
+
+        const savedTheme = localStorage.getItem('theme');
+        const initialTheme = savedTheme && (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'dark';
+        setTheme(initialTheme);
+
+        toggleButton.addEventListener('click', () => {
+            const newTheme = htmlElement.classList.contains('dark') ? 'light' : 'dark';
+            setTheme(newTheme);
+        });
+
+        // *** CONFIGURATION FOR DATA FETCHING (UNCANGED) ***
+        const FIREBASE_HOST = "upimobile-charging-station-default-rtdb.firebaseio.com";
+        const FIREBASE_AUTH = "N7TuBK5a0fYlVwKpq7ezkEgysneXNIBgZxTkCUFW";
+        const FIREBASE_URL = `https://${FIREBASE_HOST}/.json`;
+
+        // --- DOM Element References ---
+        const tempEl = document.getElementById("temperature-value"); 
+        const humEl = document.getElementById("humidity-value");
+        const mqEl = document.getElementById("air-quality-value");
+        const statusEl = document.getElementById("connection-status");
+        const timestampEl = document.getElementById("timestamp");
+        const paymentStatusEl = document.getElementById("payment-status-value"); 
+        const paymentDetailsEl = document.getElementById("payment-details-value"); 
+        
+        // NEW: Progress Bar References
+        const tempProgressEl = document.getElementById("temp-progress");
+        const humProgressEl = document.getElementById("hum-progress");
+        const aqiProgressEl = document.getElementById("aqi-progress");
+
+
+        async function getData() {
+            try {
+                const res = await fetch(`${FIREBASE_URL}?auth=${FIREBASE_AUTH}`);
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP error! Status: ${res.status}`);
+                }
+
+                const data = await res.json();
+                
+                if (data === null) {
+                    if (statusEl) statusEl.textContent = "⚠️ No data found at root.";
+                    return;
+                }
+
+                // --- 1. Sensor Data Processing (From /environment) ---
+                const env = data.environment || {};
+                
+                // Use refined PPM value (0 decimal places is cleaner for PPM display)
+                const ppmValue = env.air_quality !== undefined ? Number(env.air_quality).toFixed(0) : "---"; 
+                const tempValue = env.temperature !== undefined ? Number(env.temperature).toFixed(1) : "---";
+                const humValue = env.humidity !== undefined ? Number(env.humidity).toFixed(1) : "---";
+                
+                if (mqEl) mqEl.textContent = ppmValue; 
+                if (tempEl) tempEl.textContent = tempValue;
+                if (humEl) humEl.textContent = humValue;
+                
+                // --- Update Progress Bars ---
+                if (!isNaN(tempValue)) {
+                    // Normalize Temperature (e.g., 0C to 40C, which is 100% full)
+                    const tempPercent = Math.min((parseFloat(tempValue) / 40) * 100, 100);
+                    tempProgressEl.style.width = `${tempPercent}%`;
+                }
+                if (!isNaN(humValue)) {
+                    // Normalize Humidity (0% to 100%)
+                    const humPercent = parseFloat(humValue);
+                    humProgressEl.style.width = `${humPercent}%`;
+                }
+                if (!isNaN(ppmValue)) {
+                    // Normalize Air Quality (e.g., 400 PPM (clean) to 2000 PPM (poor) is the typical range)
+                    // We'll normalize based on a safe max of 2000 PPM
+                    const maxPPM = 2000;
+                    const ppmPercent = Math.min((parseFloat(ppmValue) / maxPPM) * 100, 100);
+                    aqiProgressEl.style.width = `${ppmPercent}%`;
+                }
+
+
+                // --- 2. Payment Status Processing (Unchanged logic) ---
+                const payments = data.razorpay_status;
+                let lastPayment = null;
+                
+                if (payments) {
+                    const paymentKeys = Object.keys(payments);
+                    const processedPayments = paymentKeys.map(key => ({
+                        key: key,
+                        data: payments[key]
+                    })).filter(entry => 
+                        entry.data.processed === true && entry.data.note !== undefined
+                    );
+                    
+                    if (processedPayments.length > 0) {
+                        processedPayments.sort((a, b) => a.key.localeCompare(b.key));
+                        lastPayment = processedPayments[processedPayments.length - 1].data;
+                    }
+                }
+
+                // Update Payment Card
+                if (paymentStatusEl && paymentDetailsEl) {
+                    if (lastPayment) {
+                        const paidAmount = (lastPayment.paidAmount / 100) || 0;
+                        const note = lastPayment.note || "N/A";
+                        const product = lastPayment.dispensedProduct === 1 ? "Mineral Water" : (lastPayment.dispensedProduct === 2 ? "Normal Water" : "Unknown");
+                        
+                        const isSuccess = note.includes("Dispensed");
+
+                        paymentStatusEl.textContent = isSuccess ? 'SUCCESS' : 'FAILED';
+                        paymentStatusEl.classList.remove('text-indigo-500', 'text-red-500', 'text-green-500');
+                        paymentStatusEl.classList.add(isSuccess ? 'text-green-500' : 'text-red-500');
+
+                        paymentDetailsEl.innerHTML = `
+                            <div>Amount: <span class="text-green-400 font-bold">${paidAmount.toFixed(2)} Rs</span></div>
+                            <div>Product: <span class="font-bold">${product}</span></div>
+                            <div class="truncate">Note: <span class="font-bold">${note}</span></div>
+                        `;
+                    } else {
+                        paymentStatusEl.textContent = "No Recent Payment";
+                        paymentStatusEl.classList.remove('text-green-500', 'text-red-500');
+                        paymentStatusEl.classList.add('text-indigo-500');
+                        paymentDetailsEl.innerHTML = "<div>Details: Awaiting first processed transaction.</div>";
+                    }
+                }
+
+
+                // Update status and timestamp
+                if (statusEl) {
+                    statusEl.textContent = "✅ Connected & Live";
+                    statusEl.classList.remove('bg-yellow-500', 'bg-red-500', 'text-gray-900');
+                    statusEl.classList.add('bg-green-500', 'pulse-animation');
+                    setTimeout(() => statusEl.classList.remove('pulse-animation'), 800);
+                }
+                if (timestampEl) timestampEl.textContent = new Date().toLocaleTimeString() + ' | ' + new Date().toLocaleDateString();
+
+            } catch (err) {
+                console.error("Error fetching Firebase data:", err);
+                if (statusEl) {
+                    statusEl.textContent = `❌ Connection/Fetch Failed`;
+                    statusEl.classList.remove('bg-yellow-500', 'bg-green-500');
+                    statusEl.classList.add('bg-red-500');
+                }
+                // Clear values on failure
+                if (mqEl) mqEl.textContent = "---";
+                if (tempEl) tempEl.textContent = "---";
+                if (humEl) humEl.textContent = "---";
+                if (paymentStatusEl) paymentStatusEl.textContent = "---";
+                if (paymentDetailsEl) paymentDetailsEl.innerHTML = "<div>Details: Error</div>";
+            }
+        }
+
+        // --- Start Polling ---
+        getData();
+        setInterval(getData, 1000); 
+    </script>
+</body>
+</html>
